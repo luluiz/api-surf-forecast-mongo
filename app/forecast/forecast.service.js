@@ -20,15 +20,15 @@ module.exports.get = async function (req, res) {
 
 module.exports.getPastPredictions = async function (req, res) {
     try {
+        // console.log('params', req.params)
+        // console.log('query', req.query)
         let filters = {};
-
         if (req.query.spot_name) filters.spot_name = req.query.spot_name;
-        if (req.query.date_from && req.query.date_to) filters.created = {
-            $gte: Moment(new Date(req.query.date_from)).startOf('day').toDate(),
-            $lte: Moment(new Date(req.query.date_to)).endOf('day').toDate()
+        if (req.query.date_from && req.query.date_to) filters.date = {
+            $gte: Moment(new Date(req.query.date_from)).add(1, 'day').startOf('day').toDate(),
+            $lte: Moment(new Date(req.query.date_to)).add(1, 'day').endOf('day').toDate()
         };
-
-        const forecasts = await Forecast.find(filters);
+        const forecasts = await PastPredictions.find(filters);
         res.status(200).json({ success: true, forecasts: forecasts });
     } catch (e) {
         console.error(`${Moment().format('DD/MM/YYYY HH:mm:ss')} - Something went wrong:`, e);

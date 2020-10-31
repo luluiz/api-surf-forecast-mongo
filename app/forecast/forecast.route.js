@@ -9,7 +9,7 @@ module.exports = function (server) {
 
     router.get('/forecast/:spot_name', ForecastService.get);
     router.get('/forecast/direct/:spot_name', ForecastService.getDirect);
-    router.get('/forecast/past/:spot_name/:date_from/:date_to', ForecastService.getPastPredictions);
+    router.get('/forecast_past', ForecastService.getPastPredictions);
 
     return server;
 };
