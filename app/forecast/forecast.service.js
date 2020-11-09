@@ -70,7 +70,7 @@ async function getForecast(spot_name) {
     if (basic_content) {
         let advanced_forecast = setAdvancedForecast(advanced_content);
         let basic_forecast = setBasicForecast(basic_content, advanced_forecast, spot_name);
-
+        // console.log(basic_forecast)
         return basic_forecast;
     }
     else return null;
@@ -130,11 +130,13 @@ function setBasicForecast(content, advanced_content, spot_name) {
     let forecast = { [today_format]: { date: null, forecast: hourForecast, high_tides: [], low_tides: [], spot_name: spot_name, indexes: [] } };
     let actual_day = today_format;
     let actual_day_moment = today_moment;
+    let is_2am = false;
 
     _.forEach(time, (it, index) => {
         if (index == 0) {   // today
             forecast[today_format].indexes.push(Number(index));
-        } else if (it.trim() == '0 AM') { // new day
+        } else if (it.trim() == '0 AM' || it.trim() == '2 AM') { // new day
+            is_2am = true;
             // console.log('new day')
             actual_day_moment = Moment(actual_day_moment).add(1, 'days');
             actual_day = Moment(actual_day_moment).format('DD/MM/YYYY');
@@ -157,14 +159,14 @@ function setBasicForecast(content, advanced_content, spot_name) {
                 index = 8 - it.indexes.length + index;
 
             let _hour;
-            if (index == 0) _hour = 0;
-            else if (index == 1) _hour = 3;
-            else if (index == 2) _hour = 6;
-            else if (index == 3) _hour = 9;
-            else if (index == 4) _hour = 12;
-            else if (index == 5) _hour = 15;
-            else if (index == 6) _hour = 18;
-            else if (index == 7) _hour = 21;
+            if (index == 0) _hour = is_2am ? 2 : 0;
+            else if (index == 1) _hour = is_2am ? 5 : 3;
+            else if (index == 2) _hour = is_2am ? 8 : 6;
+            else if (index == 3) _hour = is_2am ? 11 : 9;
+            else if (index == 4) _hour = is_2am ? 15 : 12;
+            else if (index == 5) _hour = is_2am ? 17 : 15;
+            else if (index == 6) _hour = is_2am ? 19 : 18;
+            else if (index == 7) _hour = is_2am ? 23 : 21;
 
             // if advanced swells (1, 2 and 3) have been included.
             let _swell_1_forecast = _swell_2_forecast = _swell_3_forecast = { period: null, wave_height: null, wave_direction: null };
