@@ -20,17 +20,6 @@ const hourForecastSchema = new Mongoose.Schema({
     swell_3: swellForecast,
 });
 
-const hoursSchema = new Mongoose.Schema({
-    '0': hourForecastSchema,
-    '3': hourForecastSchema,
-    '6': hourForecastSchema,
-    '9': hourForecastSchema,
-    '12': hourForecastSchema,
-    '15': hourForecastSchema,
-    '18': hourForecastSchema,
-    '21': hourForecastSchema,
-});
-
 const tideSchema = new Mongoose.Schema({
     hour: Number,
     minutes: Number,
@@ -38,13 +27,13 @@ const tideSchema = new Mongoose.Schema({
 });
 
 const forecastSchema = new Mongoose.Schema({
-    spot_name: { type: String },
-    date: { type: Date },
-    // hours: hoursSchema,
+    spot_name: { type: String, index: true },
+    date: { type: Date, index: true },
     forecast: hourForecastSchema,
     high_tides: [tideSchema],
     low_tides: [tideSchema],
-});
+}, { timestamps: true, });
+
 
 module.exports.PastPredictions = Mongoose.model('PastPrefictons', forecastSchema);
 module.exports.Forecast = Mongoose.model('Forecast', forecastSchema);

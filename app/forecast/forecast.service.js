@@ -50,7 +50,7 @@ module.exports.getDirect = async function (req, res) {
 module.exports.taskForecast = async function (spot_name) {
     console.log(`${Moment().format('DD/MM/YYYY HH:mm:ss')} - Task performed for surf forecast in ${spot_name}`);
     const _forecasts = await getForecast(spot_name);
-    await PastPredictions.create(_forecasts[0]);
+    await PastPredictions.create(_forecasts.slice(3, 11));
     await Forecast.deleteMany({ spot_name: spot_name }).exec();
     await Forecast.create(_forecasts);
 }
@@ -58,7 +58,6 @@ module.exports.taskForecast = async function (spot_name) {
 async function getForecast(spot_name) {
     const params = setForecastParams('basic,advanced', 'p,t');
     let responseForecast = await getSurfForecast(params, spot_name);
-    let _forecasts = [];
     let basic_content, advanced_content;
 
     try {
