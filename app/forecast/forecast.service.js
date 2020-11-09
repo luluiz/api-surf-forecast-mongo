@@ -229,14 +229,6 @@ function setBasicForecast(content, advanced_content, spot_name) {
     return _forecasts;
 }
 
-function getSwellForecast(value) {
-    return {
-        period: Number,
-        wave_height: Number,
-        wave_direction: String,
-    }
-}
-
 function setHourForecast(_period, _rating, _wave_height, _wave_direction, _energy, _wind_speed, _wind_direction, _wind_state, _swell_1, _swell_2, _swell_3) {
     return {
         period: _period,
