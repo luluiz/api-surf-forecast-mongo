@@ -72,12 +72,9 @@ async function getForecast(spot_name) {
         let advanced_forecast = setAdvancedForecast(advanced_content);
         let basic_forecast = setBasicForecast(basic_content, advanced_forecast, spot_name);
 
-        _.forEach(basic_forecast, it => {
-            _forecasts.push(it);
-        });
+        return basic_forecast;
     }
-
-    return _forecasts;
+    else return null;
 }
 
 function setAdvancedForecast(content) {
@@ -131,186 +128,104 @@ function setBasicForecast(content, advanced_content, spot_name) {
     let today_format = Moment().format('DD/MM/YYYY');
     let today_moment = Moment();
     let hourForecast = { rating: null, period: null, wave_height: null, wave_direction: null, energy: null, wind_speed: null, wind_direction: null, wind_state: null };
-    let hours = { '0': hourForecast, '3': hourForecast, '6': hourForecast, '9': hourForecast, '12': hourForecast, '15': hourForecast, '18': hourForecast, '21': hourForecast };
-    let forecast = { [today_format]: { date: null, hours: hours, high_tides: [], low_tides: [], spot_name: spot_name, indexes: [] } };
+    let forecast = { [today_format]: { date: null, forecast: hourForecast, high_tides: [], low_tides: [], spot_name: spot_name, indexes: [] } };
     let actual_day = today_format;
     let actual_day_moment = today_moment;
 
     _.forEach(time, (it, index) => {
-        // console.log('index it:', it, it.trim() == '0 AM' ? true : '')
         if (index == 0) {   // today
             forecast[today_format].indexes.push(Number(index));
         } else if (it.trim() == '0 AM') { // new day
             // console.log('new day')
-
             actual_day_moment = Moment(actual_day_moment).add(1, 'days');
             actual_day = Moment(actual_day_moment).format('DD/MM/YYYY');
 
-            forecast[actual_day] = { hours: hours, high_tides: [], low_tides: [], indexes: [] };
+            forecast[actual_day] = { forecast: hourForecast, high_tides: [], low_tides: [], indexes: [] };
             forecast[actual_day].indexes.push(Number(index));
         } else {
-            forecast[actual_day].hours = hours;
+            forecast[actual_day].forecast = hourForecast;
             forecast[actual_day].indexes.push(Number(index));
         }
         forecast[actual_day].date = Moment(actual_day_moment).toDate();
     });
 
-    _.forEach(forecast, (it, index) => {
-        it.indexes.forEach(i => {
+    let _forecasts = [];
+    _.forEach(forecast, (it) => {
+        // console.log('forecast indexes', it.indexes)
+        it.indexes.forEach((i, index) => {
+            // setting the hours of first day, shifting to the last hours of the day.
+            if (it.indexes.length < 8 && i <= 7)
+                index = 8 - it.indexes.length + index;
+
+            let _hour;
+            if (index == 0) _hour = 0;
+            else if (index == 1) _hour = 3;
+            else if (index == 2) _hour = 6;
+            else if (index == 3) _hour = 9;
+            else if (index == 4) _hour = 12;
+            else if (index == 5) _hour = 15;
+            else if (index == 6) _hour = 18;
+            else if (index == 7) _hour = 21;
+
+            // if advanced swells (1, 2 and 3) have been included.
+            let _swell_1_forecast = _swell_2_forecast = _swell_3_forecast = { period: null, wave_height: null, wave_direction: null };
             if (advanced_content) {
                 try {
                     const _swell_1_wave = getValueAndDirection(advanced_content.swell_1_wave[i.toString()]);
                     const _swell_1_period = advanced_content.swell_1_period[i.toString()];
-                    const _swell_1_forecast = {
-                        period: _swell_1_period,
+                    _swell_1_forecast = {
+                        period: _swell_1_period == '-' ? null : Number(_swell_1_period),
                         wave_height: _swell_1_wave.value,
                         wave_direction: _swell_1_wave.direction
                     };
-                    it.hours['0'].swell_1 = _swell_1_forecast;
-                    it.hours['3'].swell_1 = _swell_1_forecast;
-                    it.hours['6'].swell_1 = _swell_1_forecast;
-                    it.hours['9'].swell_1 = _swell_1_forecast;
-                    it.hours['12'].swell_1 = _swell_1_forecast;
-                    it.hours['15'].swell_1 = _swell_1_forecast;
-                    it.hours['18'].swell_1 = _swell_1_forecast;
-                    it.hours['21'].swell_1 = _swell_1_forecast;
 
                     const _swell_2_wave = getValueAndDirection(advanced_content.swell_2_wave[i.toString()]);
                     const _swell_2_period = advanced_content.swell_2_period[i.toString()];
-                    const _swell_2_forecast = {
-                        period: _swell_2_period,
+                    _swell_2_forecast = {
+                        period: _swell_2_period == '-' ? null : Number(_swell_2_period),
                         wave_height: _swell_2_wave.value,
                         wave_direction: _swell_2_wave.direction
                     };
-                    it.hours['0'].swell_2 = _swell_2_forecast;
-                    it.hours['3'].swell_2 = _swell_2_forecast;
-                    it.hours['6'].swell_2 = _swell_2_forecast;
-                    it.hours['9'].swell_2 = _swell_2_forecast;
-                    it.hours['12'].swell_2 = _swell_2_forecast;
-                    it.hours['15'].swell_2 = _swell_2_forecast;
-                    it.hours['18'].swell_2 = _swell_2_forecast;
-                    it.hours['21'].swell_2 = _swell_2_forecast;
 
                     const _swell_3_wave = getValueAndDirection(advanced_content.swell_3_wave[i.toString()]);
                     const _swell_3_period = advanced_content.swell_3_period[i.toString()];
-                    const _swell_3_forecast = {
-                        period: _swell_3_period,
+                    _swell_3_forecast = {
+                        period: _swell_3_period == '-' ? null : Number(_swell_3_period),
                         wave_height: _swell_3_wave.value,
                         wave_direction: _swell_3_wave.direction
                     };
-                    it.hours['0'].swell_3 = _swell_3_forecast;
-                    it.hours['3'].swell_3 = _swell_3_forecast;
-                    it.hours['6'].swell_3 = _swell_3_forecast;
-                    it.hours['9'].swell_3 = _swell_3_forecast;
-                    it.hours['12'].swell_3 = _swell_3_forecast;
-                    it.hours['15'].swell_3 = _swell_3_forecast;
-                    it.hours['18'].swell_3 = _swell_3_forecast;
-                    it.hours['21'].swell_3 = _swell_3_forecast;
                 } catch (e) {
                     console.error('Error on proccess advanced forecast.', e);
                 }
             }
 
-            const _rating = rating[i.toString()];
-            it.hours['0'].rating = Number(_rating);
-            it.hours['3'].rating = Number(_rating);
-            it.hours['6'].rating = Number(_rating);
-            it.hours['9'].rating = Number(_rating);
-            it.hours['12'].rating = Number(_rating);
-            it.hours['15'].rating = Number(_rating);
-            it.hours['18'].rating = Number(_rating);
-            it.hours['21'].rating = Number(_rating);
-
-            const _period = periods[i.toString()];
-            it.hours['0'].period = Number(_period);
-            it.hours['3'].period = Number(_period);
-            it.hours['6'].period = Number(_period);
-            it.hours['9'].period = Number(_period);
-            it.hours['12'].period = Number(_period);
-            it.hours['15'].period = Number(_period);
-            it.hours['18'].period = Number(_period);
-            it.hours['21'].period = Number(_period);
-
-            // WAVE HEIGHT
-            const wave = getValueAndDirection(wave_height[i.toString()])
-            const _height = wave ? wave.value : null;
-            const _direction = wave ? wave.direction : null;
-            it.hours['0'].wave_height = _height;
-            it.hours['3'].wave_height = _height;
-            it.hours['6'].wave_height = _height;
-            it.hours['9'].wave_height = _height;
-            it.hours['12'].wave_height = _height;
-            it.hours['15'].wave_height = _height;
-            it.hours['18'].wave_height = _height;
-            it.hours['21'].wave_height = _height;
-
-            // WAVE DIRECTION
-            it.hours['0'].wave_direction = _direction;
-            it.hours['3'].wave_direction = _direction;
-            it.hours['6'].wave_direction = _direction;
-            it.hours['9'].wave_direction = _direction;
-            it.hours['12'].wave_direction = _direction;
-            it.hours['15'].wave_direction = _direction;
-            it.hours['18'].wave_direction = _direction;
-            it.hours['21'].wave_direction = _direction;
-
-            // ENERGY
-            const _energy = energy[i.toString()];
-            it.hours['0'].energy = Number(_energy);
-            it.hours['3'].energy = Number(_energy);
-            it.hours['6'].energy = Number(_energy);
-            it.hours['9'].energy = Number(_energy);
-            it.hours['12'].energy = Number(_energy);
-            it.hours['15'].energy = Number(_energy);
-            it.hours['18'].energy = Number(_energy);
-            it.hours['21'].energy = Number(_energy);
-
-            // WIND SPEED
-            const wind = getValueAndDirection(wind_speed[i.toString()])
-            const _speed = wind ? wind.value : null;
-            const _wind_direction = wind ? wind.direction : null;
-            it.hours['0'].wind_speed = _speed;
-            it.hours['3'].wind_speed = _speed;
-            it.hours['6'].wind_speed = _speed;
-            it.hours['9'].wind_speed = _speed;
-            it.hours['12'].wind_speed = _speed;
-            it.hours['15'].wind_speed = _speed;
-            it.hours['18'].wind_speed = _speed;
-            it.hours['21'].wind_speed = _speed;
-
-            // WIND DIRECTION
-            it.hours['0'].wind_direction = _wind_direction;
-            it.hours['3'].wind_direction = _wind_direction;
-            it.hours['6'].wind_direction = _wind_direction;
-            it.hours['9'].wind_direction = _wind_direction;
-            it.hours['12'].wind_direction = _wind_direction;
-            it.hours['15'].wind_direction = _wind_direction;
-            it.hours['18'].wind_direction = _wind_direction;
-            it.hours['21'].wind_direction = _wind_direction;
-
-            // WIND STATE
-            const _wind_state = wind_state[i.toString()];
-            it.hours['0'].wind_state = _wind_state;
-            it.hours['3'].wind_state = _wind_state;
-            it.hours['6'].wind_state = _wind_state;
-            it.hours['9'].wind_state = _wind_state;
-            it.hours['12'].wind_state = _wind_state;
-            it.hours['15'].wind_state = _wind_state;
-            it.hours['18'].wind_state = _wind_state;
-            it.hours['21'].wind_state = _wind_state;
-
             const _high_tide = high_tide[i.toString()];
             if (_high_tide != '') it.high_tides.push(getTide(_high_tide))
             const _low_tide = low_tide[i.toString()];
             if (_low_tide != '') it.low_tides.push(getTide(_low_tide))
+
+            const wind = getValueAndDirection(wind_speed[i.toString()]);
+            const _wind_speed = wind ? wind.value : null;
+            const _wind_direction = wind ? wind.direction : null;
+            const _wind_state = wind_state[i.toString()];
+
+            const wave = getValueAndDirection(wave_height[i.toString()]);
+            const _wave_height = wave ? wave.value : null;
+            const _wave_direction = wave ? wave.direction : null;
+
+            const _energy = Number(energy[i.toString()]);
+            const _rating = Number(rating[i.toString()]);
+            const _period = Number(periods[i.toString()]);
+
+            it.date = new Date(new Date(new Date(new Date(it.date).setHours(_hour)).setMinutes(0)).setSeconds(0, 0));
+            it.forecast = setHourForecast(_period, _rating, _wave_height, _wave_direction, _energy, _wind_speed, _wind_direction, _wind_state, _swell_1_forecast, _swell_2_forecast, _swell_3_forecast);
             it.spot_name = spot_name;
-            // console.log(it.hours)
+
+            _forecasts.push(_.cloneDeep(it));
         });
-        // console.log(it.high_tides)
-        // console.log(it.low_tides)
     });
 
-    return forecast;
+    return _forecasts;
 }
 
 function getSwellForecast(value) {
@@ -318,6 +233,22 @@ function getSwellForecast(value) {
         period: Number,
         wave_height: Number,
         wave_direction: String,
+    }
+}
+
+function setHourForecast(_period, _rating, _wave_height, _wave_direction, _energy, _wind_speed, _wind_direction, _wind_state, _swell_1, _swell_2, _swell_3) {
+    return {
+        period: _period,
+        rating: _rating,
+        wave_height: _wave_height,
+        wave_direction: _wave_direction,
+        energy: _energy,
+        wind_speed: _wind_speed,
+        wind_direction: _wind_direction,
+        wind_state: _wind_state,
+        swell_1: _swell_1,
+        swell_2: _swell_2,
+        swell_3: _swell_3,
     }
 }
 
@@ -331,18 +262,25 @@ function getValueAndDirection(value) {
     else if (value.includes('ENE')) return { value: Number(value.replace('ENE', '')), direction: 'ENE' };
     else if (value.includes('ESE')) return { value: Number(value.replace('ESE', '')), direction: 'ESE' };
     else if (value.includes('SSE')) return { value: Number(value.replace('SSE', '')), direction: 'SSE' };
-    else if (value.includes('SSO')) return { value: Number(value.replace('SSO', '')), direction: 'SSO' };
-    else if (value.includes('OSO')) return { value: Number(value.replace('OSO', '')), direction: 'OSO' };
-    else if (value.includes('ONO')) return { value: Number(value.replace('ONO', '')), direction: 'ONO' };
-    else if (value.includes('NNO')) return { value: Number(value.replace('NNO', '')), direction: 'NNO' };
+    else if (value.includes('SSO')) return { value: Number(value.replace('SSO', '')), direction: 'SSW' };
+    else if (value.includes('SSW')) return { value: Number(value.replace('SSW', '')), direction: 'SSW' };
+    else if (value.includes('OSO')) return { value: Number(value.replace('OSO', '')), direction: 'WSW' };
+    else if (value.includes('WSW')) return { value: Number(value.replace('WSW', '')), direction: 'WSW' };
+    else if (value.includes('ONO')) return { value: Number(value.replace('ONO', '')), direction: 'WNW' };
+    else if (value.includes('WNW')) return { value: Number(value.replace('WNW', '')), direction: 'WNW' };
+    else if (value.includes('NNO')) return { value: Number(value.replace('NNO', '')), direction: 'NNW' };
+    else if (value.includes('NNW')) return { value: Number(value.replace('NNW', '')), direction: 'NNW' };
     else if (value.includes('NE')) return { value: Number(value.replace('NE', '')), direction: 'NE' };
     else if (value.includes('SE')) return { value: Number(value.replace('SE', '')), direction: 'SE' };
-    else if (value.includes('SO')) return { value: Number(value.replace('SO', '')), direction: 'SO' };
-    else if (value.includes('NO')) return { value: Number(value.replace('NO', '')), direction: 'NO' };
+    else if (value.includes('SO')) return { value: Number(value.replace('SO', '')), direction: 'SW' };
+    else if (value.includes('SW')) return { value: Number(value.replace('SW', '')), direction: 'SW' };
+    else if (value.includes('NO')) return { value: Number(value.replace('NO', '')), direction: 'NW' };
+    else if (value.includes('NW')) return { value: Number(value.replace('NW', '')), direction: 'NW' };
     else if (value.includes('N')) return { value: Number(value.replace('N', '')), direction: 'N' };
     else if (value.includes('E')) return { value: Number(value.replace('E', '')), direction: 'E' };
     else if (value.includes('S')) return { value: Number(value.replace('S', '')), direction: 'S' };
-    else if (value.includes('O')) return { value: Number(value.replace('O', '')), direction: 'O' };
+    else if (value.includes('O')) return { value: Number(value.replace('O', '')), direction: 'W' };
+    else if (value.includes('W')) return { value: Number(value.replace('W', '')), direction: 'W' };
     else return null;
 }
 

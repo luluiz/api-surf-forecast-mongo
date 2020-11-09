@@ -40,7 +40,8 @@ const tideSchema = new Mongoose.Schema({
 const forecastSchema = new Mongoose.Schema({
     spot_name: { type: String },
     date: { type: Date },
-    hours: hoursSchema,
+    // hours: hoursSchema,
+    forecast: hourForecastSchema,
     high_tides: [tideSchema],
     low_tides: [tideSchema],
 });
