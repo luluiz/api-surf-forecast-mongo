@@ -32,7 +32,7 @@ const hoursSchema = new Mongoose.Schema({
 });
 
 const tideSchema = new Mongoose.Schema({
-    hours: Number,
+    hour: Number,
     minutes: Number,
     value: Number
 });

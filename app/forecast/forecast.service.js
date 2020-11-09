@@ -123,7 +123,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
     const periods = json[0][5];
     // const wave_graph = json[0][6];
     const energy = json[0][7];
-    // const wind = json[0][8];
+    const wind_speed = json[0][8];
     const wind_state = json[0][9];
     const high_tide = json[0][10];
     const low_tide = json[0][11];
@@ -266,7 +266,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
             it.hours['21'].energy = Number(_energy);
 
             // WIND SPEED
-            const wind = getValueAndDirection(wave_height[i.toString()])
+            const wind = getValueAndDirection(wind_speed[i.toString()])
             const _speed = wind ? wind.value : null;
             const _wind_direction = wind ? wind.direction : null;
             it.hours['0'].wind_speed = _speed;
