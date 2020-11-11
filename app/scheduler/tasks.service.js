@@ -1,6 +1,5 @@
 const ForecastService = require('../forecast/forecast.service');
 let CronJob = require('cron').CronJob;
-ForecastService.taskForecast('Tabatinga');
 
 new CronJob(
     '0 0 17 * * *',

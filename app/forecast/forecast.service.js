@@ -130,14 +130,30 @@ function setBasicForecast(content, advanced_content, spot_name) {
     let forecast = { [today_format]: { date: null, forecast: hourForecast, high_tides: [], low_tides: [], spot_name: spot_name, indexes: [] } };
     let actual_day = today_format;
     let actual_day_moment = today_moment;
-    let is_2am = false;
+    let is_1am = false, is_2am = false;
 
+    // console.log(time)
     _.forEach(time, (it, index) => {
+        // console.log('indexx', index + ': ', it.trim(), '0 AM: ' + (it.trim() == '0 AM'), '1 AM: ' + (it.trim() == '1 AM'), '2 AM: ' + (it.trim() == '2 AM'))
+
         if (index == 0) {   // today
+            forecast[today_format] = { forecast: hourForecast, high_tides: [], low_tides: [], indexes: [] };
             forecast[today_format].indexes.push(Number(index));
-        } else if (it.trim() == '0 AM' || it.trim() == '2 AM') { // new day
-            is_2am = true;
-            // console.log('new day')
+        } else if (it.trim() == '0 AM' || it.trim() == '1 AM' || it.trim() == '2 AM') { // new day
+            if (it.trim() == '1 AM') {
+                // console.log("1 AM")
+                is_1am = true;
+                is_2am = false;
+            } else if (it.trim() == '2 AM') {
+                // console.log("2 AM")
+                is_1am = false;
+                is_2am = true;
+            } else if (it.trim() == '0 AM') {
+                // console.log("0 AM")
+                is_1am = false;
+                is_2am = false;
+            }
+
             actual_day_moment = Moment(actual_day_moment).add(1, 'days');
             actual_day = Moment(actual_day_moment).format('DD/MM/YYYY');
 
@@ -159,14 +175,14 @@ function setBasicForecast(content, advanced_content, spot_name) {
                 index = 8 - it.indexes.length + index;
 
             let _hour;
-            if (index == 0) _hour = is_2am ? 2 : 0;
-            else if (index == 1) _hour = is_2am ? 5 : 3;
-            else if (index == 2) _hour = is_2am ? 8 : 6;
-            else if (index == 3) _hour = is_2am ? 11 : 9;
-            else if (index == 4) _hour = is_2am ? 15 : 12;
-            else if (index == 5) _hour = is_2am ? 17 : 15;
-            else if (index == 6) _hour = is_2am ? 19 : 18;
-            else if (index == 7) _hour = is_2am ? 23 : 21;
+            if (index == 0) _hour = is_2am ? 2 : (is_1am ? 1 : 0);
+            else if (index == 1) _hour = is_2am ? 5 : (is_1am ? 4 : 3);
+            else if (index == 2) _hour = is_2am ? 8 : (is_1am ? 7 : 6);
+            else if (index == 3) _hour = is_2am ? 11 : (is_1am ? 10 : 9);
+            else if (index == 4) _hour = is_2am ? 14 : (is_1am ? 13 : 12);
+            else if (index == 5) _hour = is_2am ? 17 : (is_1am ? 16 : 15);
+            else if (index == 6) _hour = is_2am ? 20 : (is_1am ? 19 : 18);
+            else if (index == 7) _hour = is_2am ? 23 : (is_1am ? 22 : 21);
 
             // if advanced swells (1, 2 and 3) have been included.
             let _swell_1_forecast = _swell_2_forecast = _swell_3_forecast = { period: null, wave_height: null, wave_direction: null };
@@ -175,7 +191,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
                     const _swell_1_wave = getValueAndDirection(advanced_content.swell_1_wave[i.toString()]);
                     const _swell_1_period = advanced_content.swell_1_period[i.toString()];
                     _swell_1_forecast = {
-                        period: _swell_1_period == '-' ? null : Number(_swell_1_period),
+                        period: toNumber(_swell_1_period),
                         wave_height: _swell_1_wave.value,
                         wave_direction: _swell_1_wave.direction
                     };
@@ -183,7 +199,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
                     const _swell_2_wave = getValueAndDirection(advanced_content.swell_2_wave[i.toString()]);
                     const _swell_2_period = advanced_content.swell_2_period[i.toString()];
                     _swell_2_forecast = {
-                        period: _swell_2_period == '-' ? null : Number(_swell_2_period),
+                        period: toNumber(_swell_2_period),
                         wave_height: _swell_2_wave.value,
                         wave_direction: _swell_2_wave.direction
                     };
@@ -191,7 +207,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
                     const _swell_3_wave = getValueAndDirection(advanced_content.swell_3_wave[i.toString()]);
                     const _swell_3_period = advanced_content.swell_3_period[i.toString()];
                     _swell_3_forecast = {
-                        period: _swell_3_period == '-' ? null : Number(_swell_3_period),
+                        period: toNumber(_swell_3_period),
                         wave_height: _swell_3_wave.value,
                         wave_direction: _swell_3_wave.direction
                     };
@@ -216,7 +232,7 @@ function setBasicForecast(content, advanced_content, spot_name) {
 
             const _energy = Number(energy[i.toString()]);
             const _rating = Number(rating[i.toString()]);
-            const _period = Number(periods[i.toString()]);
+            const _period = toNumber(periods[i.toString()]);
 
             it.date = new Date(new Date(new Date(new Date(it.date).setHours(_hour)).setMinutes(0)).setSeconds(0, 0));
             it.forecast = setHourForecast(_period, _rating, _wave_height, _wave_direction, _energy, _wind_speed, _wind_direction, _wind_state, _swell_1_forecast, _swell_2_forecast, _swell_3_forecast);
@@ -314,8 +330,18 @@ function getTide(value) {
         hour: _hour,
         minutes: _minute,
         time: split[0],
-        value: split[1] == 'NaN' ? null : Number(split[1])
+        value: toNumber(split[1])
     };
+}
+
+function toNumber(value) {
+    try {
+        if (value.trim() == 'NaN' || value.trim() == '-')
+            return null;
+        else return Number(value);
+    } catch (e) {
+        console.error('Number conversion error:', value, e);
+    }
 }
 
 /**
