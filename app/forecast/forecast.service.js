@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const Request = require('request');
 const QueryString = require('querystring');
-const Mongoose = require('mongoose');
 const Moment = require('moment-timezone');
 const PastPredictions = require('./forecast.model').PastPredictions;
 const Forecast = require('./forecast.model').Forecast;
@@ -10,8 +9,11 @@ const Tabletojson = require('tabletojson').Tabletojson;
 module.exports.get = async function (req, res) {
     const spot_name = req.params.spot_name;
     try {
-        const forecasts = await Forecast.find({ spot_name: spot_name });
-        res.status(200).json({ success: true, forecasts: forecasts });
+        const forecast = await Forecast.find({ spot_name: spot_name });
+        if (!forecast || (forecast && !forecast.length))
+            exports.getDirect(req, res);
+        else
+            res.status(200).json({ success: true, forecast: forecast });
     } catch (e) {
         console.error(`${Moment().format('DD/MM/YYYY HH:mm:ss')} - Something went wrong:`, e);
         res.status(500).send('Something went wrong.')
@@ -28,8 +30,8 @@ module.exports.getPastPredictions = async function (req, res) {
             $gte: Moment(new Date(req.query.date_from)).add(1, 'day').startOf('day').toDate(),
             $lte: Moment(new Date(req.query.date_to)).add(1, 'day').endOf('day').toDate()
         };
-        const forecasts = await PastPredictions.find(filters);
-        res.status(200).json({ success: true, forecasts: forecasts });
+        const forecast = await PastPredictions.find(filters);
+        res.status(200).json({ success: true, forecasts: forecast });
     } catch (e) {
         console.error(`${Moment().format('DD/MM/YYYY HH:mm:ss')} - Something went wrong:`, e);
         res.status(500).send('Something went wrong.')
@@ -38,9 +40,9 @@ module.exports.getPastPredictions = async function (req, res) {
 
 module.exports.getDirect = async function (req, res) {
     const spot_name = req.params.spot_name;
-    const _forecasts = await getForecast(spot_name);
     try {
-        res.status(200).json({ success: true, forecast: _forecasts });
+        const forecast = await getForecast(spot_name);
+        res.status(200).json({ success: true, forecast: forecast });
     } catch (e) {
         console.error(`${Moment().format('DD/MM/YYYY HH:mm:ss')} - Something went wrong:`, e);
         res.status(500).send('Something went wrong.')
